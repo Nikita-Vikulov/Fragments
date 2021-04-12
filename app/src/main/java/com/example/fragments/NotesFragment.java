@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+
 public class NotesFragment extends Fragment {
     public static final String CURRENT_NOTE = "CurrentCity";
     private int currentPosition = 0;
@@ -64,9 +65,9 @@ public class NotesFragment extends Fragment {
         // заполняем его значениями,
         // и добавляем на экран.
         // Кроме того, создаём обработку касания на элемент
-        for (int i = 0; i < Notes.notes.length; i++) {
+        for (int i = 0; i < NotesFragment.Notes.notes.length; i++) {
             TextView tv = new TextView(getContext());
-            tv.setText(Notes.notes[i]);
+            tv.setText(NotesFragment.Notes.notes[i]);
             tv.setTextSize(30);
             layoutView.addView(tv);
             final int fi = i;
@@ -88,7 +89,6 @@ public class NotesFragment extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        // Определение, можно ли будет расположить рядом герб в другом фрагменте
         isLandscape = getResources().getConfiguration().orientation
                 == Configuration.ORIENTATION_LANDSCAPE;
         // Если это не первое создание, то восстановим текущую позицию
@@ -96,7 +96,6 @@ public class NotesFragment extends Fragment {
             // Восстановление текущей позиции.
             currentPosition = savedInstanceState.getInt(CURRENT_NOTE, 0);
         }
-        // Если можно нарисовать рядом герб, то сделаем это
         if (isLandscape) {
             showLandCoatOfNotes(0);
         }
@@ -114,21 +113,21 @@ public class NotesFragment extends Fragment {
     public void description(int index) {
         switch (index) {
             case 0:
-                description = Notes.nd1;
+                description = NotesFragment.Notes.nd1;
                 break;
             case 1:
-                description = Notes.nd2;
+                description = NotesFragment.Notes.nd2;
                 break;
             case 2:
-                description = Notes.nd3;
+                description = NotesFragment.Notes.nd3;
                 break;
         }
     }
 
-    // Показать герб в ландшафтной ориентации
+    // Показать описание в ландшафтной ориентации
     private void showLandCoatOfNotes(int index) {
-        // Создаём новый фрагмент с текущей позицией для вывода герба
-        CoatOfNotesFragment detail = CoatOfNotesFragment.newInstance(index);
+        // Создаём новый фрагмент с текущей позицией для вывода описания
+        DescriptionOfNotesFragment detail = DescriptionOfNotesFragment.newInstance(index);
         // Выполняем транзакцию по замене фрагмента
         FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -138,14 +137,13 @@ public class NotesFragment extends Fragment {
 
     }
 
-    // Показать герб в портретной ориентации.
+    // Показать описание в портретной ориентации.
     private void showPortCoatOfNotes(int index) {
         // Откроем вторую activity
         Intent intent = new Intent();
-        intent.setClass(getActivity(), CoatOfNotesActivity.class);
+        intent.setClass(getActivity(), DescriptionOfNotesActivity.class);
         // и передадим туда параметры
-        intent.putExtra(CoatOfNotesFragment.ARG_INDEX, index);
+        intent.putExtra(DescriptionOfNotesFragment.ARG_INDEX, index);
         startActivity(intent);
     }
 }
-
