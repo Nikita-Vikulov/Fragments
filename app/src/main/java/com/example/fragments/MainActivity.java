@@ -16,19 +16,39 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.example.fragments.ui.NotesFragment;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         readSettings();
         initView();
+        initToolbar();
+        addFragment(NotesFragment.newInstance());
         addFragment(new NotesFragment());
     }
+
+/*    private void initToolbar() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+    }*/
+
+
+   //////////////////////////////////////////////
+/*    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        readSettings();
+        initView();
+        addFragment(new NotesFragment());
+    }*/
 
     private void initView() {
         Toolbar toolbar = initToolbar();
@@ -57,11 +77,13 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+
     private Toolbar initToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         return toolbar;
     }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -123,12 +145,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addFragment(Fragment fragment) {
-
         //Получить менеджер фрагментов
         FragmentManager fragmentManager = getSupportFragmentManager();
 
         // Открыть транзакцию
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.fragment_container, fragment);
+        fragmentTransaction.addToBackStack(null);
 
         // Удалить видимый фрагмент
         if (Settings.IsDeleteBeforeAdd) {

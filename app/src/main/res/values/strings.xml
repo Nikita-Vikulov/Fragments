@@ -20,4 +20,7 @@
     <string name="new_menu_item_added">Menu item added</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="textView">textView</string>
+    <string name="title">Title</string>
+    <string name="date">Date</string>
 </resources>

@@ -18,7 +18,7 @@ public class DescriptionOfNotesActivity extends AppCompatActivity {
         }
 
         if (savedInstanceState == null) {
-            // Если эта activity запускается первый раз (с каждым новым гербом первый раз),
+            // Если эта activity запускается первый раз (с каждым новым описанием первый раз),
             // то перенаправим параметр фрагменту
             DescriptionOfNotesFragment details = new DescriptionOfNotesFragment();
             details.setArguments(getIntent().getExtras());

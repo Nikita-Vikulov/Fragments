@@ -12,4 +12,5 @@
     <color name="colorAccent">#03DAC5</color>
     <color name="main_text_color">#651FFF</color>
     <color name="favorite_text_color">#F50057</color>
+    <color name="colorText">#1E0A4A</color>
 </resources>

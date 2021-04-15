@@ -8,6 +8,8 @@ import android.view.ViewGroup;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.fragment.app.Fragment;
 
+import com.example.fragments.ui.NotesFragment;
+
 public class DescriptionOfNotesFragment extends Fragment {
     public static final String ARG_INDEX = "index";
     private int index;
@@ -15,12 +17,12 @@ public class DescriptionOfNotesFragment extends Fragment {
     // Фабричный метод создания фрагмента
     // Фрагменты рекомендуется создавать через фабричные методы.
     public static DescriptionOfNotesFragment newInstance(int index) {
-        DescriptionOfNotesFragment f = new DescriptionOfNotesFragment();    // создание
+        DescriptionOfNotesFragment fragment = new DescriptionOfNotesFragment();    // создание
         // Передача параметра
         Bundle args = new Bundle();
         args.putInt(ARG_INDEX, index);
-        f.setArguments(args);
-        return f;
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Override
@@ -38,8 +40,6 @@ public class DescriptionOfNotesFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragments_description_of_notes, container, false);
         // найти в контейнере элемент-изображение
         AppCompatTextView textDescription = view.findViewById(R.id.description);
-        // Получить из ресурсов массив указателей на изображения
-      //  TypedArray text = getResources().obtainTypedArray(R.array.coat_of_arms_imgs);
         // Выбрать по индексу подходящий
         textDescription.setText(NotesFragment.description);
         textDescription.setTextSize(30);
