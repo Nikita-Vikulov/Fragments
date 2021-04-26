@@ -16,13 +16,22 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.example.fragments.ui.CardFragment;
 import com.example.fragments.ui.NotesFragment;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.List;
 
+import observer.Publisher;
+
+import static com.example.fragments.ui.NotesFragment.adapter;
+import static com.example.fragments.ui.NotesFragment.data;
+
 public class MainActivity extends AppCompatActivity {
 
+    private Navigation navigation;
+    private Publisher publisher = new Publisher();
+    private boolean moveToLastPosition;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,25 +39,9 @@ public class MainActivity extends AppCompatActivity {
         readSettings();
         initView();
         initToolbar();
-        addFragment(NotesFragment.newInstance());
+      //  addFragment(NotesFragment.newInstance(data.getCardData(position)));
         addFragment(new NotesFragment());
     }
-
-/*    private void initToolbar() {
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-    }*/
-
-
-   //////////////////////////////////////////////
-/*    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        readSettings();
-        initView();
-        addFragment(new NotesFragment());
-    }*/
 
     private void initView() {
         Toolbar toolbar = initToolbar();
@@ -77,13 +70,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
     private Toolbar initToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         return toolbar;
     }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -95,21 +86,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private boolean navigateFragment(int id) {
-        switch (id) {
-            case R.id.action_settings:
-                addFragment(new SettingsFragment());
-                return true;
-            case R.id.action_favorite:
-                addFragment(new FavoriteFragment());
-                return true;
-            default:
-                addFragment(new NotesFragment());
-                return true;
-        }
-    }
-
-    @Override
+   @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Здесь определяем меню приложения (активити)
         getMenuInflater().inflate(R.menu.main, menu);
@@ -131,6 +108,33 @@ public class MainActivity extends AppCompatActivity {
         });
 
         return true;
+    }
+
+    private boolean navigateFragment(int id) {
+        switch (id) {
+            case R.id.action_settings:
+                addFragment(new SettingsFragment());
+                return true;
+            case R.id.action_favorite:
+                addFragment(new FavoriteFragment());
+                return true;
+            case R.id.action_add:
+                navigation.addFragment(CardFragment.newInstance(), true);
+                publisher.subscribe(cardData -> {
+                    data.addCardData(cardData);
+                    adapter.notifyItemInserted(data.size() - 1);
+                    // это сигнал, чтобы вызванный метод onCreateView
+                    // перепрыгнул на конец списка
+                    moveToLastPosition = true;
+                });
+            case R.id.action_clear:
+                data.clearCardData();
+                adapter.notifyDataSetChanged();
+                return true;
+            default:
+                addFragment(new NotesFragment());
+                return true;
+        }
     }
 
     private Fragment getVisibleFragment(FragmentManager fragmentManager) {
@@ -186,5 +190,8 @@ public class MainActivity extends AppCompatActivity {
         Settings.IsAddFragment = sharedPref.getBoolean(Settings.IS_ADD_FRAGMENT_USED, true);
         Settings.IsBackAsRemove = sharedPref.getBoolean(Settings.IS_BACK_AS_REMOVE_FRAGMENT, true);
         Settings.IsDeleteBeforeAdd = sharedPref.getBoolean(Settings.IS_DELETE_FRAGMENT_BEFORE_ADD, false);
+    }
+    public Publisher getPublisher() {
+        return publisher;
     }
 }

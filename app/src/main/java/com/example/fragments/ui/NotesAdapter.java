@@ -4,27 +4,34 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.AppCompatImageView;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.fragments.R;
 import com.example.fragments.data.CardData;
 import com.example.fragments.data.CardsSource;
 
+import java.text.SimpleDateFormat;
+
 public class NotesAdapter
         extends RecyclerView.Adapter<NotesAdapter.ViewHolder> {
     private final static String TAG = "NotesAdapter";
     private final CardsSource dataSource;
+    private Fragment fragment;
+    private int menuPosition;
     private OnItemClickListener itemClickListener;
 
+    public int getMenuPosition() {
+        return menuPosition;
+    }
     // Передаём в конструктор источник данных
     // В нашем случае это массив, но может быть и запрос к БД
-    public NotesAdapter(CardsSource dataSource) {
+    public NotesAdapter(CardsSource dataSource, Fragment fragment) {
         this.dataSource = dataSource;
+        this.fragment = fragment;
     }
 
     // Создать новый элемент пользовательского интерфейса
@@ -74,8 +81,6 @@ public class NotesAdapter
         private final TextView title;
         private final TextView description;
         private final TextView date;
-        private AppCompatImageView image;
-        private CheckBox like;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -83,16 +88,26 @@ public class NotesAdapter
             description = itemView.findViewById(R.id.description);
             date = itemView.findViewById(R.id.date);
 
+            registerContextMenu(itemView);
+
             title.setOnClickListener(v -> {
                 if (itemClickListener != null) {
                     itemClickListener.onItemClick(v, getAdapterPosition());
                 }
             });
         }
-
+        private void registerContextMenu(@NonNull View itemView) {
+            if (fragment != null){
+                itemView.setOnLongClickListener(v -> {
+                    menuPosition = getLayoutPosition();
+                    return false;
+                });
+                fragment.registerForContextMenu(itemView);
+            }
+        }
         public void setData(CardData cardData){
             title.setText(cardData.getTitle());
-            date.setText(cardData.getDate());
+            date.setText(new SimpleDateFormat("dd-MM-yy").format(cardData.getDate()));
         }
     }
 }
