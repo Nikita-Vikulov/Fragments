@@ -12,47 +12,30 @@ import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
+import com.example.fragments.ui.CardFragment;
 import com.example.fragments.ui.NotesFragment;
 import com.google.android.material.navigation.NavigationView;
 
-import java.util.List;
+import observer.Publisher;
+
+import static com.example.fragments.ui.NotesFragment.adapter;
+import static com.example.fragments.ui.NotesFragment.data;
 
 public class MainActivity extends AppCompatActivity {
+
+    private Navigation navigation;
+    private Publisher publisher = new Publisher();
+    private boolean moveToLastPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         readSettings();
-        initView();
         initToolbar();
-        addFragment(NotesFragment.newInstance());
-        addFragment(new NotesFragment());
-    }
-
-/*    private void initToolbar() {
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-    }*/
-
-
-   //////////////////////////////////////////////
-/*    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        readSettings();
-        initView();
-        addFragment(new NotesFragment());
-    }*/
-
-    private void initView() {
-        Toolbar toolbar = initToolbar();
-        initDrawer(toolbar);
+        navigation = new Navigation(getSupportFragmentManager());
+        getNavigation().addFragment(NotesFragment.newInstance(), false);
     }
 
     // регистрация drawer
@@ -77,13 +60,14 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
-    private Toolbar initToolbar() {
+    private void initToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        return toolbar;
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        initDrawer(toolbar);
+       // return toolbar;
     }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -95,21 +79,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private boolean navigateFragment(int id) {
-        switch (id) {
-            case R.id.action_settings:
-                addFragment(new SettingsFragment());
-                return true;
-            case R.id.action_favorite:
-                addFragment(new FavoriteFragment());
-                return true;
-            default:
-                addFragment(new NotesFragment());
-                return true;
-        }
-    }
-
-    @Override
+   @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Здесь определяем меню приложения (активити)
         getMenuInflater().inflate(R.menu.main, menu);
@@ -133,48 +103,31 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    private Fragment getVisibleFragment(FragmentManager fragmentManager) {
-        List<Fragment> fragments = fragmentManager.getFragments();
-        int countFragments = fragments.size();
-        for (int i = countFragments - 1; i >= 0; i--) {
-            Fragment fragment = fragments.get(i);
-            if (fragment.isVisible())
-                return fragment;
+    private boolean navigateFragment(int id) {
+        switch (id) {
+            case R.id.action_settings:
+                getNavigation().addFragment(new SettingsFragment(), true);
+                return true;
+            case R.id.action_favorite:
+                getNavigation().addFragment(new FavoriteFragment(), true);
+                return true;
+           case R.id.action_add:
+                navigation.addFragment(CardFragment.newInstance(), true);
+                publisher.subscribe(cardData -> {
+                    data.addCardData(cardData);
+                    adapter.notifyItemInserted(data.size() - 1);
+                    // это сигнал, чтобы вызванный метод onCreateView
+                    // перепрыгнул на конец списка
+                    moveToLastPosition = true;
+                });
+            case R.id.action_clear:
+                data.clearCardData();
+                adapter.notifyDataSetChanged();
+                return true;
+            default:
+                getNavigation().addFragment(new NotesFragment(), true);
+                return true;
         }
-        return null;
-    }
-
-    private void addFragment(Fragment fragment) {
-        //Получить менеджер фрагментов
-        FragmentManager fragmentManager = getSupportFragmentManager();
-
-        // Открыть транзакцию
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.fragment_container, fragment);
-        fragmentTransaction.addToBackStack(null);
-
-        // Удалить видимый фрагмент
-        if (Settings.IsDeleteBeforeAdd) {
-            Fragment fragmentToRemove = getVisibleFragment(fragmentManager);
-            if (fragmentToRemove != null) {
-                fragmentTransaction.remove(fragmentToRemove);
-            }
-        }
-
-        // Добавить фрагмент
-        if (Settings.IsAddFragment) {
-            fragmentTransaction.add(R.id.fragment_container, fragment);
-        } else {
-            fragmentTransaction.replace(R.id.fragment_container, fragment);
-        }
-
-        // Добавить транзакцию в бакстек
-        if (Settings.IsBackStack) {
-            fragmentTransaction.addToBackStack(null);
-        }
-
-        // Закрыть транзакцию
-        fragmentTransaction.commit();
     }
 
     // Чтение настроек
@@ -186,5 +139,19 @@ public class MainActivity extends AppCompatActivity {
         Settings.IsAddFragment = sharedPref.getBoolean(Settings.IS_ADD_FRAGMENT_USED, true);
         Settings.IsBackAsRemove = sharedPref.getBoolean(Settings.IS_BACK_AS_REMOVE_FRAGMENT, true);
         Settings.IsDeleteBeforeAdd = sharedPref.getBoolean(Settings.IS_DELETE_FRAGMENT_BEFORE_ADD, false);
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
+    }
+
+    public Navigation getNavigation() {
+        return navigation;
+    }
+
+    public Publisher getPublisher() {
+        return publisher;
     }
 }
