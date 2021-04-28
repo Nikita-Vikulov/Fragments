@@ -29,11 +29,11 @@ import com.example.fragments.Navigation;
 import com.example.fragments.R;
 import com.example.fragments.data.CardData;
 import com.example.fragments.data.CardsSource;
-import com.example.fragments.data.CardsSourceImpl;
+import com.example.fragments.data.CardSourceFirebaseImpl;
+import com.example.fragments.data.CardsSourceResponse;
+import com.example.fragments.observer.Publisher;
 
 import java.util.Objects;
-
-import observer.Publisher;
 
 public class NotesFragment extends Fragment {
     private static final int MY_DEFAULT_DURATION = 1000;
@@ -46,19 +46,11 @@ public class NotesFragment extends Fragment {
     public static RecyclerView recyclerView;
     private Navigation navigation;
     private Publisher publisher;
-    private boolean moveToLastPosition;
+    private boolean moveToFirstPosition;
+
 
     public static NotesFragment newInstance() {
         return new NotesFragment();
-    }
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        // Получим источник данных для списка
-        // Поскольку onCreateView запускается каждый раз,
-        // при возврате в фрагмент, данные надо создавать один раз
-        data = new CardsSourceImpl(getResources()).init();
     }
 
     @Override
@@ -70,6 +62,13 @@ public class NotesFragment extends Fragment {
         // Получим источник данных для списка
         initView(view);
         setHasOptionsMenu(true);
+        data = new CardSourceFirebaseImpl().init(new CardsSourceResponse() {
+            @Override
+            public void initialized(CardsSource cardsData) {
+                adapter.notifyDataSetChanged();
+            }
+        });
+        adapter.setDataSource(data);
         return view;
     }
 
@@ -106,7 +105,7 @@ public class NotesFragment extends Fragment {
         recyclerView.setLayoutManager(layoutManager);
 
         // Установим адаптер
-        adapter = new NotesAdapter(data, this);
+        adapter = new NotesAdapter(this);
         recyclerView.setAdapter(adapter);
 
         // Добавим разделитель карточек
@@ -121,9 +120,9 @@ public class NotesFragment extends Fragment {
         animator.setRemoveDuration(MY_DEFAULT_DURATION);
         recyclerView.setItemAnimator(animator);
 
-        if (moveToLastPosition){
-            recyclerView.smoothScrollToPosition(data.size() - 1);
-            moveToLastPosition = false;
+        if (moveToFirstPosition && data.size() > 0){
+            recyclerView.scrollToPosition(0);
+            moveToFirstPosition = false;
         }
         // Установим слушателя
         adapter.SetOnItemClickListener((view, currentPosition) -> {

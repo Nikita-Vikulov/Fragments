@@ -22,16 +22,19 @@ public class NotesAdapter
         extends RecyclerView.Adapter<NotesAdapter.ViewHolder> {
 
     private final static String TAG = "NotesAdapter";
-    private final CardsSource dataSource;
+    private CardsSource dataSource;
     private Fragment fragment;
     private OnItemClickListener itemClickListener;
     private int menuPosition;
 
     // Передаём в конструктор источник данных
     // В нашем случае это массив, но может быть и запрос к БД
-    public NotesAdapter(CardsSource dataSource, Fragment fragment) {
-        this.dataSource = dataSource;
+    public NotesAdapter(Fragment fragment) {
         this.fragment = fragment;
+    }
+    public void setDataSource(CardsSource dataSource){
+        this.dataSource = dataSource;
+        notifyDataSetChanged();
     }
 
     // Создать новый элемент пользовательского интерфейса

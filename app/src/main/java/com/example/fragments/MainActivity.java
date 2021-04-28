@@ -6,6 +6,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -13,11 +14,14 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.example.fragments.data.CardData;
+import com.example.fragments.observer.Observer;
+import com.example.fragments.observer.Publisher;
 import com.example.fragments.ui.CardFragment;
 import com.example.fragments.ui.NotesFragment;
 import com.google.android.material.navigation.NavigationView;
 
-import observer.Publisher;
+import javax.annotation.Nonnull;
 
 import static com.example.fragments.ui.NotesFragment.adapter;
 import static com.example.fragments.ui.NotesFragment.data;
@@ -26,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Navigation navigation;
     private Publisher publisher = new Publisher();
-    private boolean moveToLastPosition;
+    private boolean moveToFirstPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,8 +55,8 @@ public class MainActivity extends AppCompatActivity {
         // Обработка навигационного меню
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (navigateFragment(id)){
+            int menuItemId = item.getItemId();
+            if (onItemSelected(menuItemId)) {
                 drawer.closeDrawer(GravityCompat.START);
                 return true;
             }
@@ -66,20 +70,63 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
         initDrawer(toolbar);
-       // return toolbar;
+        // return toolbar;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Обработка выбора пункта меню приложения (активити)
-        int id = item.getItemId();
-        if (navigateFragment(id)) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+    public boolean onOptionsItemSelected(@Nonnull MenuItem item) {
+        // return super.onOptionsItemSelected(item);
+        return onItemSelected(item.getItemId()) || super.onOptionsItemSelected(item);
     }
 
-   @Override
+    @Override
+    public boolean onContextItemSelected(@NonNull MenuItem item) {
+        return onItemSelected(item.getItemId()) || super.onContextItemSelected(item);
+    }
+
+    private boolean onItemSelected(int menuItemId) {
+        switch (menuItemId) {
+            case R.id.action_add:
+                navigation.addFragment(CardFragment.newInstance(), true);
+                publisher.subscribe(cardData -> {
+                    data.addCardData(cardData);
+                    adapter.notifyItemInserted(data.size() - 1);
+                    // это сигнал, чтобы вызванный метод onCreateView
+                    // перепрыгнул на начало списка
+                    moveToFirstPosition = true;
+                });
+                return true;
+            case R.id.action_update:
+                final int updatePosition = adapter.getMenuPosition();
+                navigation.addFragment(CardFragment.newInstance(data.getCardData(updatePosition)), true);
+                publisher.subscribe(new Observer() {
+                    @Override
+                    public void updateCardData(CardData cardData) {
+                        data.updateCardData(updatePosition, cardData);
+                        adapter.notifyItemChanged(updatePosition);
+                    }
+                });
+                return true;
+            case R.id.action_delete:
+                int deletePosition = adapter.getMenuPosition();
+                data.deleteCardData(deletePosition);
+                adapter.notifyItemRemoved(deletePosition);
+                return true;
+            case R.id.action_clear:
+                data.clearCardData();
+                adapter.notifyDataSetChanged();
+                return true;
+            case R.id.action_settings:
+                getNavigation().addFragment(new SettingsFragment(), true);
+                return true;
+            case R.id.action_favorite:
+                getNavigation().addFragment(new FavoriteFragment(), true);
+                return true;
+        }
+        return false;
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Здесь определяем меню приложения (активити)
         getMenuInflater().inflate(R.menu.main, menu);
@@ -102,16 +149,11 @@ public class MainActivity extends AppCompatActivity {
 
         return true;
     }
-
+/*
     private boolean navigateFragment(int id) {
         switch (id) {
-            case R.id.action_settings:
-                getNavigation().addFragment(new SettingsFragment(), true);
-                return true;
-            case R.id.action_favorite:
-                getNavigation().addFragment(new FavoriteFragment(), true);
-                return true;
-           case R.id.action_add:
+
+            case R.id.action_add:
                 navigation.addFragment(CardFragment.newInstance(), true);
                 publisher.subscribe(cardData -> {
                     data.addCardData(cardData);
@@ -128,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
                 getNavigation().addFragment(new NotesFragment(), true);
                 return true;
         }
-    }
+    }*/
 
     // Чтение настроек
     private void readSettings() {

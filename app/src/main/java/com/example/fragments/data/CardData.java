@@ -6,6 +6,7 @@ import android.os.Parcelable;
 import java.util.Date;
 
 public class CardData implements Parcelable {
+    protected String id;
     protected final String title;
     protected final String description;
     protected Date date;
@@ -61,6 +62,14 @@ public class CardData implements Parcelable {
         }
     };
 
+    public String getId(){
+        return id;
+    }
+
+    public void setId(String id){
+        this.id = id;
+    }
+
     public String getTitle() {
         return title;
     }
@@ -72,5 +81,4 @@ public class CardData implements Parcelable {
     public Date getDate() {
         return date;
     }
-
 }
