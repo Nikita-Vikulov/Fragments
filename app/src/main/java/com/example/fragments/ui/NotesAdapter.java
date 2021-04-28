@@ -22,16 +22,20 @@ public class NotesAdapter
         extends RecyclerView.Adapter<NotesAdapter.ViewHolder> {
 
     private final static String TAG = "NotesAdapter";
-    private final CardsSource dataSource;
+    private CardsSource dataSource;
     private Fragment fragment;
     private OnItemClickListener itemClickListener;
     private int menuPosition;
 
     // Передаём в конструктор источник данных
     // В нашем случае это массив, но может быть и запрос к БД
-    public NotesAdapter(CardsSource dataSource, Fragment fragment) {
-        this.dataSource = dataSource;
+    public NotesAdapter(Fragment fragment) {
         this.fragment = fragment;
+    }
+
+    public void setDataSource(CardsSource dataSource) {
+        this.dataSource = dataSource;
+        notifyDataSetChanged();
     }
 
     // Создать новый элемент пользовательского интерфейса
@@ -97,14 +101,23 @@ public class NotesAdapter
             title.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    menuPosition = getLayoutPosition();
                     if (itemClickListener != null) {
                         itemClickListener.onItemClick(v, getAdapterPosition());
                     }
                 }
             });
-
             // Обработчик нажатий на картинке
             title.setOnLongClickListener(new View.OnLongClickListener() {
+                @RequiresApi(api = Build.VERSION_CODES.N)
+                @Override
+                public boolean onLongClick(View v) {
+                    menuPosition = getLayoutPosition();
+                    itemView.showContextMenu(10, 10);
+                    return true;
+                }
+            });
+            description.setOnLongClickListener(new View.OnLongClickListener() {
                 @RequiresApi(api = Build.VERSION_CODES.N)
                 @Override
                 public boolean onLongClick(View v) {
@@ -127,6 +140,7 @@ public class NotesAdapter
 
         public void setData(CardData cardData) {
             title.setText(cardData.getTitle());
+            description.setText(cardData.getDescription());
             date.setText(new SimpleDateFormat("dd-MM-yy").format(cardData.getDate()));
         }
     }

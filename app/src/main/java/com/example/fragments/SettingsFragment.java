@@ -95,7 +95,7 @@ public class SettingsFragment extends Fragment {
     }
 
     // Сохранение настроек приложения
-    private void writeSettings(){
+    private void writeSettings() {
         // Специальный класс для хранения настроек
         SharedPreferences sharedPref = requireActivity().getSharedPreferences(Settings.SHARED_PREFERENCE_NAME, MODE_PRIVATE);
         // Настройки сохраняются посредством специального класса editor.

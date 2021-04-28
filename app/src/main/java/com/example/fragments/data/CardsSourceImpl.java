@@ -16,7 +16,7 @@ public class CardsSourceImpl implements CardsSource {
         this.resources = resources;
     }
 
-    public CardsSourceImpl init(){
+    public CardsSourceImpl init(CardsSourceResponse cardsSourceResponse) {
         // строки заголовков из ресурсов
         String[] titles = {CardData.note_1.title, CardData.note_2.title, CardData.note_3.title,};
         // строки описаний из ресурсов
@@ -25,6 +25,11 @@ public class CardsSourceImpl implements CardsSource {
         for (int i = 0; i < descriptions.length; i++) {
             dataSource.add(new CardData(titles[i], descriptions[i], Calendar.getInstance().getTime()));
         }
+
+        if (cardsSourceResponse != null) {
+            cardsSourceResponse.initialized(this);
+        }
+
         return this;
     }
 
@@ -32,9 +37,10 @@ public class CardsSourceImpl implements CardsSource {
         return dataSource.get(position);
     }
 
-    public int size(){
+    public int size() {
         return dataSource.size();
     }
+
     @Override
     public void deleteCardData(int position) {
         dataSource.remove(position);

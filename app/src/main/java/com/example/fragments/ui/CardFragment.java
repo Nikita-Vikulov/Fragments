@@ -13,12 +13,11 @@ import androidx.fragment.app.Fragment;
 import com.example.fragments.MainActivity;
 import com.example.fragments.R;
 import com.example.fragments.data.CardData;
+import com.example.fragments.observer.Publisher;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.Calendar;
 import java.util.Date;
-
-import observer.Publisher;
 
 public class CardFragment extends Fragment {
 
@@ -97,7 +96,14 @@ public class CardFragment extends Fragment {
         String title = this.title.getText().toString();
         String description = this.description.getText().toString();
         Date date = getDateFromDatePicker();
-        return new CardData(title, description, date);
+        if (cardData != null) {
+            CardData answer;
+            answer = new CardData(title, description, date);
+            answer.setId(cardData.getId());
+            return answer;
+        } else {
+            return new CardData(title, description, date);
+        }
     }
 
     // Получение даты из DatePicker
@@ -119,6 +125,7 @@ public class CardFragment extends Fragment {
         title.setText(cardData.getTitle());
         description.setText(cardData.getDescription());
         initDatePicker(cardData.getDate());
+
     }
 
     // Установка даты в DatePicker

@@ -26,4 +26,8 @@
     <string name="clear">Clear</string>
     <string name="update">Update</string>
     <string name="delete">Delete</string>
+    <string name="datePickerView">datePickerView</string>
+    <string name="titleView">titleView</string>
+    <string name="descriptionView">descriptionView</string>
+    <string name="description">description</string>
 </resources>

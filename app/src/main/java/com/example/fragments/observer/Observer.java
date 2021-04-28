@@ -1,4 +1,4 @@
-package observer;
+package com.example.fragments.observer;
 
 import com.example.fragments.data.CardData;
 

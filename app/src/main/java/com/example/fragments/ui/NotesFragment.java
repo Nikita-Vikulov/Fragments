@@ -2,38 +2,33 @@ package com.example.fragments.ui;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.fragments.DescriptionOfNotesActivity;
-import com.example.fragments.DescriptionOfNotesFragment;
 import com.example.fragments.MainActivity;
 import com.example.fragments.Navigation;
 import com.example.fragments.R;
 import com.example.fragments.data.CardData;
+import com.example.fragments.data.CardSourceFirebaseImpl;
 import com.example.fragments.data.CardsSource;
-import com.example.fragments.data.CardsSourceImpl;
+import com.example.fragments.data.CardsSourceResponse;
+import com.example.fragments.observer.Observer;
+import com.example.fragments.observer.Publisher;
 
 import java.util.Objects;
-
-import observer.Publisher;
 
 public class NotesFragment extends Fragment {
     private static final int MY_DEFAULT_DURATION = 1000;
@@ -46,19 +41,10 @@ public class NotesFragment extends Fragment {
     public static RecyclerView recyclerView;
     private Navigation navigation;
     private Publisher publisher;
-    private boolean moveToLastPosition;
+    private boolean moveToFirstPosition;
 
     public static NotesFragment newInstance() {
         return new NotesFragment();
-    }
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        // Получим источник данных для списка
-        // Поскольку onCreateView запускается каждый раз,
-        // при возврате в фрагмент, данные надо создавать один раз
-        data = new CardsSourceImpl(getResources()).init();
     }
 
     @Override
@@ -70,13 +56,20 @@ public class NotesFragment extends Fragment {
         // Получим источник данных для списка
         initView(view);
         setHasOptionsMenu(true);
+        data = new CardSourceFirebaseImpl().init(new CardsSourceResponse() {
+            @Override
+            public void initialized(CardsSource cardsData) {
+                adapter.notifyDataSetChanged();
+            }
+        });
+        adapter.setDataSource(data);
         return view;
     }
 
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        MainActivity activity = (MainActivity)context;
+        MainActivity activity = (MainActivity) context;
         navigation = activity.getNavigation();
         publisher = activity.getPublisher();
     }
@@ -91,7 +84,6 @@ public class NotesFragment extends Fragment {
     private void initView(View view) {
         recyclerView = view.findViewById(R.id.recycler_view_lines);
         // Получим источник данных для списка
-        //data = new CardsSourceImpl(getResources()).init();
         initRecyclerView();
     }
 
@@ -106,7 +98,7 @@ public class NotesFragment extends Fragment {
         recyclerView.setLayoutManager(layoutManager);
 
         // Установим адаптер
-        adapter = new NotesAdapter(data, this);
+        adapter = new NotesAdapter(this);
         recyclerView.setAdapter(adapter);
 
         // Добавим разделитель карточек
@@ -121,9 +113,9 @@ public class NotesFragment extends Fragment {
         animator.setRemoveDuration(MY_DEFAULT_DURATION);
         recyclerView.setItemAnimator(animator);
 
-        if (moveToLastPosition){
-            recyclerView.smoothScrollToPosition(data.size() - 1);
-            moveToLastPosition = false;
+        if (moveToFirstPosition && data.size() > 0) {
+            recyclerView.scrollToPosition(0);
+            moveToFirstPosition = false;
         }
         // Установим слушателя
         adapter.SetOnItemClickListener((view, currentPosition) -> {
@@ -150,68 +142,50 @@ public class NotesFragment extends Fragment {
             currentPosition = savedInstanceState.getInt(CURRENT_NOTE, 0);
         }
         if (isLandscape) {
-            showLandDescriptionOfNotes(0);
+            showLandDescriptionOfNotes();
         }
     }
 
     private void showDescriptionOfNotes(int index) {
         if (isLandscape) {
-            showLandDescriptionOfNotes(index);
+            showLandDescriptionOfNotes();
         } else {
-            showPortDescriptionOfNotes(index);
+            showPortDescriptionOfNotes();
         }
-        description(index);
-    }
-
-    public void description(int index) {
         description = CardData.noteDescription(index);
     }
 
     // Показать описание в ландшафтной ориентации
-    private void showLandDescriptionOfNotes(int index) {
-        // Создаём новый фрагмент с текущей позицией для вывода описания
-        DescriptionOfNotesFragment detail = DescriptionOfNotesFragment.newInstance(index);
-        // Выполняем транзакцию по замене фрагмента
-        FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentManager.beginTransaction()
-                .replace(R.id.description, detail)
-                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-                .commit();
+    private void showLandDescriptionOfNotes() {
+        final int updatePosition = adapter.getMenuPosition();
+        navigation.addFragment(CardFragment.newInstance(data.getCardData(updatePosition)), true);
+        publisher.subscribe(new Observer() {
+            @Override
+            public void updateCardData(CardData cardData) {
+                data.updateCardData(updatePosition, cardData);
+                adapter.notifyItemChanged(updatePosition);
+            }
+        });
     }
 
     // Показать описание в портретной ориентации.
-    private void showPortDescriptionOfNotes(int index) {
-        // Откроем вторую activity
-        Intent intent = new Intent();
-        intent.setClass(getActivity(), DescriptionOfNotesActivity.class);
-        // и передадим туда параметры
-        intent.putExtra(DescriptionOfNotesFragment.ARG_INDEX, index);
-        startActivity(intent);
-    }
-    @Override
-    public void onCreateContextMenu(@NonNull ContextMenu menu, @NonNull View v, @Nullable ContextMenu.ContextMenuInfo menuInfo) {
-        super.onCreateContextMenu(menu, v, menuInfo);
-        MenuInflater inflater = requireActivity().getMenuInflater();
-        inflater.inflate(R.menu.card_menu, menu);
+    private void showPortDescriptionOfNotes() {
+        final int updatePosition = adapter.getMenuPosition();
+        navigation.addFragment(CardFragment.newInstance(data.getCardData(updatePosition)), true);
+        publisher.subscribe(new Observer() {
+            @Override
+            public void updateCardData(CardData cardData) {
+                data.updateCardData(updatePosition, cardData);
+                adapter.notifyItemChanged(updatePosition);
+            }
+        });
     }
 
     @Override
-    public boolean onContextItemSelected(@NonNull MenuItem item) {
-        final int position = adapter.getMenuPosition();
-        switch(item.getItemId()) {
-            case R.id.action_update:
-                navigation.addFragment(CardFragment.newInstance(data.getCardData(position)), true);
-                publisher.subscribe(cardData -> {
-                    data.updateCardData(position, cardData);
-                    adapter.notifyItemChanged(position);
-                });
-                return true;
-            case R.id.action_delete:
-                data.deleteCardData(position);
-                adapter.notifyItemRemoved(position);
-                return true;
-        }
-        return super.onContextItemSelected(item);
+    public void onCreateContextMenu(@NonNull ContextMenu menu, @NonNull View
+            v, @Nullable ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        MenuInflater inflater = requireActivity().getMenuInflater();
+        inflater.inflate(R.menu.card_menu, menu);
     }
 }
