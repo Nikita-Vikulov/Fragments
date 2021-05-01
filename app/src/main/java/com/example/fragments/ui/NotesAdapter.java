@@ -32,6 +32,10 @@ public class NotesAdapter
     public NotesAdapter(Fragment fragment) {
         this.fragment = fragment;
     }
+    public void setDataSource(CardsSource dataSource){
+        this.dataSource = dataSource;
+        notifyDataSetChanged();
+    }
 
     public void setDataSource(CardsSource dataSource) {
         this.dataSource = dataSource;
