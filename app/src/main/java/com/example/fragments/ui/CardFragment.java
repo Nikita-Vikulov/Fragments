@@ -96,6 +96,7 @@ public class CardFragment extends Fragment {
         String title = this.title.getText().toString();
         String description = this.description.getText().toString();
         Date date = getDateFromDatePicker();
+
         if (cardData != null) {
             CardData answer;
             answer = new CardData(title, description, date);

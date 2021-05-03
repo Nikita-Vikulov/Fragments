@@ -8,6 +8,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
@@ -72,7 +73,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@Nonnull MenuItem item) {
-        // return super.onOptionsItemSelected(item);
         return onItemSelected(item.getItemId()) || super.onOptionsItemSelected(item);
     }
 
@@ -94,9 +94,7 @@ public class MainActivity extends AppCompatActivity {
                 });
                 return true;
             case R.id.action_delete:
-                int deletePosition = adapter.getMenuPosition();
-                data.deleteCardData(deletePosition);
-                adapter.notifyItemRemoved(deletePosition);
+                alertDelete();
                 return true;
             case R.id.action_clear:
                 data.clearCardData();
@@ -110,6 +108,38 @@ public class MainActivity extends AppCompatActivity {
                 return true;
         }
         return false;
+    }
+
+    private void alertDelete() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        // В билдере указываем заголовок окна. Можно указывать как ресурс, так
+        // и строку
+        builder.setTitle(R.string.exclamation)
+                // Указываем сообщение в окне. Также есть вариант со строковым
+                // параметром
+                .setMessage("Delete a note?")
+                // Из этого окна нельзя выйти кнопкой Back
+                .setCancelable(false)
+                // Устанавливаем отрицательную кнопку
+                .setNegativeButton(R.string.no,
+                        // Ставим слушатель, будем обрабатывать нажатие
+                        (dialog, id) -> Toast.makeText(MainActivity.this, "No", Toast.LENGTH_SHORT).show())
+                // Устанавливаем нейтральную кнопку
+                .setNeutralButton(R.string.dunno,
+                        // Ставим слушатель, будем обрабатывать нажатие
+                        (dialog, id) -> Toast.makeText(MainActivity.this, "Cancel", Toast.LENGTH_SHORT).show())
+                // Устанавливаем кнопку. Название кнопки также можно задавать
+                // строкой
+                .setPositiveButton(R.string.yes,
+                        // Ставим слушатель, будем обрабатывать нажатие
+                        (dialog, id) -> {
+                            int deletePosition = adapter.getMenuPosition();
+                            data.deleteCardData(deletePosition);
+                            adapter.notifyItemRemoved(deletePosition);
+                            Toast.makeText(MainActivity.this, "Yes", Toast.LENGTH_SHORT).show();
+                        });
+        AlertDialog alert = builder.create();
+        alert.show();
     }
 
     @Override

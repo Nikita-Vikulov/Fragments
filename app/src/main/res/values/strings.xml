@@ -30,4 +30,8 @@
     <string name="titleView">titleView</string>
     <string name="descriptionView">descriptionView</string>
     <string name="description">description</string>
+    <string name="exclamation">Warning!</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="dunno">Cancel</string>
 </resources>

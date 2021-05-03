@@ -37,11 +37,6 @@ public class NotesAdapter
         notifyDataSetChanged();
     }
 
-    public void setDataSource(CardsSource dataSource) {
-        this.dataSource = dataSource;
-        notifyDataSetChanged();
-    }
-
     // Создать новый элемент пользовательского интерфейса
     // Запускается менеджером
     @NonNull
@@ -103,6 +98,15 @@ public class NotesAdapter
             registerContextMenu(itemView);
             // Обработчик нажатий на картинке
             title.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    menuPosition = getLayoutPosition();
+                    if (itemClickListener != null) {
+                        itemClickListener.onItemClick(v, getAdapterPosition());
+                    }
+                }
+            });
+            description.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     menuPosition = getLayoutPosition();

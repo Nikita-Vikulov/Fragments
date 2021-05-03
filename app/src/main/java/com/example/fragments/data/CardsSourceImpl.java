@@ -25,11 +25,9 @@ public class CardsSourceImpl implements CardsSource {
         for (int i = 0; i < descriptions.length; i++) {
             dataSource.add(new CardData(titles[i], descriptions[i], Calendar.getInstance().getTime()));
         }
-
         if (cardsSourceResponse != null) {
             cardsSourceResponse.initialized(this);
         }
-
         return this;
     }
 
