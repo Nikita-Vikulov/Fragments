@@ -1,0 +1,191 @@
+package com.example.fragments.ui;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.res.Configuration;
+import android.os.Bundle;
+import android.view.ContextMenu;
+import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.fragments.MainActivity;
+import com.example.fragments.Navigation;
+import com.example.fragments.R;
+import com.example.fragments.data.CardData;
+import com.example.fragments.data.CardSourceFirebaseImpl;
+import com.example.fragments.data.CardsSource;
+import com.example.fragments.data.CardsSourceResponse;
+import com.example.fragments.observer.Observer;
+import com.example.fragments.observer.Publisher;
+
+import java.util.Objects;
+
+public class NotesFragment extends Fragment {
+    private static final int MY_DEFAULT_DURATION = 1000;
+    public static final String CURRENT_NOTE = "CurrentNotes";
+    private int currentPosition = 0;
+    private boolean isLandscape;
+    public static String description;
+    public static CardsSource data;
+    public static NotesAdapter adapter;
+    public static RecyclerView recyclerView;
+    private Navigation navigation;
+    private Publisher publisher;
+    private boolean moveToFirstPosition;
+
+    public static NotesFragment newInstance() {
+        return new NotesFragment();
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        View view = inflater.inflate(R.layout.fragment_notes, container, false);
+        RecyclerView recyclerView = view.findViewById(R.id.recycler_view_lines);
+        // Получим источник данных для списка
+        initView(view);
+        setHasOptionsMenu(true);
+        data = new CardSourceFirebaseImpl().init(new CardsSourceResponse() {
+            @Override
+            public void initialized(CardsSource cardsData) {
+                adapter.notifyDataSetChanged();
+            }
+        });
+        adapter.setDataSource(data);
+        return view;
+    }
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        MainActivity activity = (MainActivity) context;
+        navigation = activity.getNavigation();
+        publisher = activity.getPublisher();
+    }
+
+    @Override
+    public void onDetach() {
+        navigation = null;
+        publisher = null;
+        super.onDetach();
+    }
+
+    private void initView(View view) {
+        recyclerView = view.findViewById(R.id.recycler_view_lines);
+        // Получим источник данных для списка
+        initRecyclerView();
+    }
+
+    @SuppressLint("NewApi")
+    private void initRecyclerView() {
+
+        // Эта установка служит для повышения производительности системы
+        recyclerView.setHasFixedSize(true);
+
+        // Будем работать со встроенным менеджером
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
+        recyclerView.setLayoutManager(layoutManager);
+
+        // Установим адаптер
+        adapter = new NotesAdapter(this);
+        recyclerView.setAdapter(adapter);
+
+        // Добавим разделитель карточек
+        DividerItemDecoration itemDecoration = new DividerItemDecoration(Objects.requireNonNull(getContext()), LinearLayoutManager.VERTICAL);
+        itemDecoration.setDrawable(getResources().getDrawable(R.drawable.separator,
+                null));
+        recyclerView.addItemDecoration(itemDecoration);
+
+        // Установим анимацию. А чтобы было хорошо заметно, сделаем анимацию долгой
+        DefaultItemAnimator animator = new DefaultItemAnimator();
+        animator.setAddDuration(MY_DEFAULT_DURATION);
+        animator.setRemoveDuration(MY_DEFAULT_DURATION);
+        recyclerView.setItemAnimator(animator);
+
+        if (moveToFirstPosition && data.size() > 0) {
+            recyclerView.scrollToPosition(0);
+            moveToFirstPosition = false;
+        }
+        // Установим слушателя
+        adapter.SetOnItemClickListener((view, currentPosition) -> {
+            showDescriptionOfNotes(currentPosition);
+        });
+    }
+
+    // Сохраним текущую позицию (вызывается перед выходом из фрагмента)
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putInt(CURRENT_NOTE, currentPosition);
+        super.onSaveInstanceState(outState);
+    }
+
+    // activity создана, можно к ней обращаться. Выполним начальные действия
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        isLandscape = getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_LANDSCAPE;
+        // Если это не первое создание, то восстановим текущую позицию
+        if (savedInstanceState != null) {
+            // Восстановление текущей позиции.
+            currentPosition = savedInstanceState.getInt(CURRENT_NOTE, 0);
+        }
+        if (isLandscape) {
+            showLandDescriptionOfNotes();
+        }
+    }
+
+    private void showDescriptionOfNotes(int index) {
+        if (isLandscape) {
+            showLandDescriptionOfNotes();
+        } else {
+            showPortDescriptionOfNotes();
+        }
+        description = CardData.noteDescription(index);
+    }
+
+    // Показать описание в ландшафтной ориентации
+    private void showLandDescriptionOfNotes() {
+        final int updatePosition = adapter.getMenuPosition();
+        navigation.addFragment(CardFragment.newInstance(data.getCardData(updatePosition)), true);
+        publisher.subscribe(new Observer() {
+            @Override
+            public void updateCardData(CardData cardData) {
+                data.updateCardData(updatePosition, cardData);
+                adapter.notifyItemChanged(updatePosition);
+            }
+        });
+    }
+
+    // Показать описание в портретной ориентации.
+    private void showPortDescriptionOfNotes() {
+        final int updatePosition = adapter.getMenuPosition();
+        navigation.addFragment(CardFragment.newInstance(data.getCardData(updatePosition)), true);
+        publisher.subscribe(new Observer() {
+            @Override
+            public void updateCardData(CardData cardData) {
+                data.updateCardData(updatePosition, cardData);
+                adapter.notifyItemChanged(updatePosition);
+            }
+        });
+    }
+
+    @Override
+    public void onCreateContextMenu(@NonNull ContextMenu menu, @NonNull View
+            v, @Nullable ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        MenuInflater inflater = requireActivity().getMenuInflater();
+        inflater.inflate(R.menu.card_menu, menu);
+    }
+}
